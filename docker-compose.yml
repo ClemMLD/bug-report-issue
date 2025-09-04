@@ -1,0 +1,52 @@
+services:
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: bug-report-app
+    ports:
+      - "8080:8080"
+    volumes:
+      - .:/var/www/html
+      - vendor:/var/www/html/vendor
+    environment:
+      - DB_HOST=postgres
+      - DB_DATABASE=${DB_DATABASE}
+      - DB_USERNAME=${DB_USERNAME}
+      - DB_PASSWORD=${DB_PASSWORD}
+    depends_on:
+      - postgres
+
+  postgres:
+    image: postgres:16
+    container_name: bug-report-postgres
+    ports:
+      - "5432:5432"
+    environment:
+      POSTGRES_DB: ${DB_DATABASE}
+      POSTGRES_USER: ${DB_USERNAME}
+      POSTGRES_PASSWORD: ${DB_PASSWORD}
+
+  adminer:
+    image: adminer
+    container_name: bug-report-adminer
+    restart: always
+    ports:
+      - "8081:8080"
+    depends_on:
+      - postgres
+
+  vite:
+    image: node:20
+    working_dir: /var/www/html
+    volumes:
+      - .:/var/www/html:cached
+      - vendor:/var/www/html/vendor
+    command: sh -c "npm run dev"
+    ports:
+      - "${VITE_PORT:-5173}:5173"
+    depends_on:
+      - app
+volumes:
+  dbdata:
+  vendor:
